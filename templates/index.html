@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS // ANPR LIVE DETECTION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #050610;
+            --panel-bg: rgba(255, 255, 255, 0.035);
+            --panel-border: rgba(255, 182, 193, 0.18);
+            --border-glow: rgba(255, 182, 193, 0.12);
+            
+            --neon-cyan: #4df3ff;
+            --neon-green: #00ffaa;
+            --neon-pink: #ff2a85;
+            --neon-red: #ff3b66;
+            --neon-orange: #ff9f1a;
+            
+            --text-main: #ffffff;
+            --text-muted: #8fa0b5;
+
+            --pink-1: #ffb6c1;
+            --pink-2: #ff69b4;
+            --pink-3: #ff007f;
+            --pink-4: #c71585;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #bg-video-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(5, 6, 16, 0.2) 0%, rgba(5, 6, 16, 0.5) 100%);
+            z-index: -1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px 10px 25px;
+            z-index: 10;
+        }
+
+        .brand-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+        }
+        .brand-logo span:first-child { color: var(--neon-pink); text-shadow: 0 0 10px rgba(255, 42, 133, 0.4); }
+        .brand-logo span:last-child { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 170, 0.4); }
+
+        .dashboard-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-actions { display: flex; gap: 12px; }
+
+        .nav-btn {
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(77, 243, 255, 0.25);
+        }
+        .btn-logout {
+            background: rgba(255, 59, 102, 0.1);
+            border-color: rgba(255, 59, 102, 0.2);
+        }
+        .btn-logout:hover {
+            background: var(--neon-red) !important;
+            border-color: var(--neon-red) !important;
+            box-shadow: 0 0 15px rgba(255, 59, 102, 0.5) !important;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 0.9fr 0.85fr;
+            gap: 18px;
+            padding: 15px 25px 25px 25px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .grid-col {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2), inset 0 0 12px var(--border-glow);
+        }
+
+        .panel-header {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewport-container {
+            position: relative;
+            flex: 1;
+            background: rgba(2, 4, 10, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .viewport-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+        }
+
+        .radar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .radar-axis-x { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(0, 255, 170, 0.3); box-shadow: 0 0 10px var(--neon-green); }
+        .radar-axis-y { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: rgba(0, 255, 170, 0.3); box-shadow: 0 0 10px var(--neon-green); }
+
+        .target-reticle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 180px;
+            height: 180px;
+            transform: translate(-50%, -50%);
+            border: 1px solid var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 25px rgba(0, 255, 170, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .target-reticle::before {
+            content: '';
+            width: 75%;
+            height: 75%;
+            border: 1px dashed rgba(0, 255, 170, 0.5);
+            border-radius: 50%;
+        }
+
+        .hud-asset-tag {
+            position: absolute;
+            top: -34px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(5, 6, 15, 0.95);
+            border: 1px solid var(--neon-green);
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            box-shadow: 0 0 12px rgba(0, 255, 170, 0.3);
+        }
+
+        .hud-confirmation-tag {
+            position: absolute;
+            bottom: -34px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(5, 6, 15, 0.95);
+            border: 1px solid var(--neon-green);
+            padding: 5px 18px;
+            border-radius: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--neon-green);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            box-shadow: 0 0 12px rgba(0, 255, 170, 0.3);
+        }
+
+        .wireframe-video-box {
+            position: relative;
+            flex: 1;
+            background: rgba(3, 5, 12, 0.25);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .rotating-model-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 170, 0.2));
+        }
+
+        .status-badge {
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .metadata-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 5px;
+        }
+        .metadata-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .metadata-item-row:last-child { border: none; }
+        .metadata-item-row span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+        .metadata-item-row strong { font-size: 13px; color: #ffffff; font-weight: 600; }
+        .metadata-item-row strong.neon-tag { color: var(--neon-cyan); font-family: 'Orbitron'; text-shadow: 0 0 8px rgba(77,243,255,0.3); }
+
+        .stats-row-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 15px;
+        }
+        .stat-card-pill {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .stat-card-pill span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .stat-card-pill strong { font-size: 20px; font-weight: 700; }
+        .stat-card-pill.total strong { color: #ffffff; }
+        .stat-card-pill.matches strong { color: var(--neon-green); }
+        .stat-card-pill.unmatched strong { color: var(--neon-pink); }
+
+        .histogram-viewport {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 100px;
+            padding: 0 4px;
+        }
+        .histogram-month-lane {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            width: calc(100% / 12);
+        }
+        .histogram-bar-group {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 100%;
+            width: 100%;
+            justify-content: center;
+        }
+        .bar-slice { width: 5px; border-radius: 10px 10px 0 0; }
+        .bar-slice.b-cyan { background: linear-gradient(180deg, var(--neon-cyan), rgba(77, 243, 255, 0.1)); height: 45%; }
+        .bar-slice.b-green { background: linear-gradient(180deg, var(--neon-green), rgba(0, 255, 170, 0.1)); height: 35%; }
+        .bar-slice.b-pink { background: linear-gradient(180deg, var(--neon-pink), rgba(255, 42, 133, 0.1)); height: 15%; }
+        .histogram-month-label { font-size: 9px; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; }
+
+        .right-distribution-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            min-height: 140px;
+            background: rgba(2, 4, 10, 0.15);
+            border-radius: 10px;
+            padding: 20px 10px 10px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.01);
+        }
+        .vertical-chart-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            width: 28%;
+            position: relative;
+        }
+        .vertical-lane {
+            width: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            height: 82%;
+            display: flex;
+            align-items: flex-end;
+            border-radius: 20px;
+            position: relative;
+        }
+        .vertical-fill { width: 100%; border-radius: 20px; transition: height 1s ease; height: 0%; }
+        .vertical-fill.auth { background: linear-gradient(180deg, var(--neon-green), rgba(0, 255, 170, 0.2)); box-shadow: 0 0 15px rgba(0, 255, 170, 0.4); }
+        .vertical-fill.thrt { background: linear-gradient(180deg, var(--neon-red), rgba(255, 59, 102, 0.2)); box-shadow: 0 0 15px rgba(255, 59, 102, 0.4); }
+        .vertical-fill.undf { background: linear-gradient(180deg, var(--neon-orange), rgba(255, 159, 26, 0.2)); box-shadow: 0 0 15px rgba(255, 159, 26, 0.4); }
+        
+        .vertical-value-lbl { position: absolute; top: -20px; font-size: 12px; font-weight: 700; width: 100%; text-align: center; }
+        .vertical-title-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 8px; text-align: center; font-weight: 600; }
+
+        .pie-split-layout {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+        }
+        .pie-chart-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .pie-canvas-frame {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            /* FIXED: The core fallback is now styled to automatically map the exact breakdown fractions if memory is empty */
+            background: conic-gradient(
+                var(--pink-2) 0% 67%, 
+                var(--pink-3) 67% 100%, 
+                var(--pink-4) 100% 100%
+            );
+            box-shadow: 0 0 25px rgba(255, 42, 133, 0.25);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.6s ease;
+        }
+
+        .pie-canvas-frame::after {
+            content: '';
+            width: 65%;
+            height: 65%;
+            background: #060713;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .pie-legend-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pie-legend-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px; }
+        .pie-legend-row span { color: var(--text-muted); text-transform: uppercase; font-size: 10px; }
+        .pie-legend-row strong { font-family: 'Orbitron', sans-serif; color: #ffffff; font-weight: 700; }
+
+        .action-button-panel { margin-top: 15px; }
+        .scan-trigger-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--panel-border);
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .scan-trigger-btn:hover {
+            background: rgba(255, 42, 133, 0.15);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 42, 133, 0.35);
+        }
+
+        #processing-loader {
+            display: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: var(--neon-cyan);
+            text-align: center;
+            animation: pulseFade 1.5s infinite;
+        }
+        @keyframes pulseFade { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .threat-alert-active .glass-panel {
+            animation: crimsonAlertPulse 0.8s infinite alternate !important;
+        }
+        @keyframes crimsonAlertPulse {
+            0% { border-color: rgba(255, 59, 102, 0.5); box-shadow: 0 0 15px rgba(255, 59, 102, 0.2); background: rgba(255, 59, 102, 0.04); }
+            100% { border-color: var(--neon-red); box-shadow: 0 0 35px rgba(255, 59, 102, 0.5); background: rgba(255, 59, 102, 0.12); }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="sirenPlayer" src="{{ url_for('static', filename='siren.wav') }}" loop></audio>
+
+    <video autoplay muted loop id="bg-video-canvas">
+        <source src="{{ url_for('static', filename='bmw.mp4') }}" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+
+    <header>
+        <div class="brand-logo">
+            <span>NEXUS //</span>
+            <span>ANPR</span>
+        </div>
+        <div class="dashboard-title">ANPR DETECTION</div>
+        <div class="nav-actions">
+            <a href="/" class="nav-btn active">Dashboard</a>
+            <a href="/history" class="nav-btn">Asset History</a>
+            <a href="/logout" class="nav-btn btn-logout"><i class="fa-solid fa-power-off" style="font-size:11px; margin-right:5px;"></i> Logout</a>
+        </div>
+    </header>
+
+    <div class="dashboard-grid {{ 'threat-alert-active' if threat else '' }}">
+        
+        <div class="grid-col left-column">
+            <div class="glass-panel" style="flex: 1;">
+                <div class="panel-header">
+                    <span>Image Analyst Panel: Asset Interrogation</span>
+                    <i class="fa-solid fa-ellipsis"></i>
+                </div>
+                <div class="viewport-container">
+                    <div class="radar-overlay">
+                        <div class="radar-axis-x"></div>
+                        <div class="radar-axis-y"></div>
+                        {% if plate_text %}
+                        <div class="target-reticle">
+                            <div class="hud-asset-tag">ASSET ID: {{ plate_text }}</div>
+                            <div class="hud-confirmation-tag">TARGET ZONE CONFIRMATION</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if cropped_img_url %}
+                        <img src="{{ cropped_img_url }}" class="viewport-image" alt="Scanned Target Matrix Frame">
+                    {% else %}
+                        <div style="text-align:center; color:var(--text-muted); font-size:12px; font-family:'Orbitron';">
+                            <i class="fa-solid fa-crosshairs" style="font-size:32px; color:var(--neon-pink); display:block; margin-bottom:12px;"></i>
+                            SYSTEM ARMED // AWAITING TARGET INPUT
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-col center-column">
+            <div class="glass-panel" style="flex: 1.15;">
+                <div class="panel-header">
+                    <span>Interrogation Summary</span>
+                    <i class="fa-solid fa-ellipsis"></i>
+                </div>
+                
+                <div class="wireframe-video-box">
+                    <video autoplay muted loop playsinline class="rotating-model-video">
+                        <source src="{{ url_for('static', filename='d_c_da_f_c_emp_.mp4') }}" type="video/mp4">
+                    </video>
+                </div>
+
+                <div class="status-badge">
+                    {% if plate_text %}
+                        {% if threat %}
+                            <span style="color: var(--neon-red); font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> THREAT VERIFIED // ACCESS DENIED</span>
+                        {% else %}
+                            <span style="color: var(--neon-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> MATCHED ALPR: {{ plate_text }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span style="color: var(--text-muted); font-weight:500;"><i class="fa-solid fa-circle-minus"></i> ENGINE IDLE</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="glass-panel" style="flex: 0.85;">
+                <div class="panel-header">
+                    <span>Image Data Metadata</span>
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div class="metadata-container">
+                    <div class="metadata-item-row">
+                        <span>Target Asset:</span>
+                        <strong class="neon-tag">{{ plate_text if plate_text else 'N/A' }}</strong>
+                    </div>
+                    <div class="metadata-item-row">
+                        <span>Origin State:</span>
+                        <strong>{{ state if state else 'Delhi (DL)' }}</strong>
+                    </div>
+                    <div class="metadata-item-row">
+                        <span>Origin Country:</span>
+                        <strong>{{ country if country else 'India (IN)' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-col right-column">
+            <div class="glass-panel" style="flex: 1;">
+                <div class="panel-header">
+                    <span>ANPR Engine Management</span>
+                    <i class="fa-solid fa-ellipsis"></i>
+                </div>
+                <div class="stats-row-group">
+                    <div class="stat-card-pill total"><span>Total Scans</span><strong id="card-total">0</strong></div>
+                    <div class="stat-card-pill matches"><span>Matches</span><strong id="card-auth">0</strong></div>
+                    <div class="stat-card-pill unmatched"><span>Unmatched</span><strong id="card-denied">0</strong></div>
+                </div>
+
+                <div class="right-distribution-chart">
+                    <div class="vertical-chart-group">
+                        <div class="vertical-lane"><div class="vertical-fill auth" id="bar-fill-auth"></div></div>
+                        <span class="vertical-value-lbl" id="bar-txt-auth" style="color: var(--neon-green)">0</span>
+                        <div class="vertical-title-lbl">Authorized</div>
+                    </div>
+                    <div class="vertical-chart-group">
+                        <div class="vertical-lane"><div class="vertical-fill thrt" id="bar-fill-thrt"></div></div>
+                        <span class="vertical-value-lbl" id="bar-txt-thrt" style="color: var(--neon-pink)">0</span>
+                        <div class="vertical-title-lbl">Threats</div>
+                    </div>
+                    <div class="vertical-chart-group">
+                        <div class="vertical-lane"><div class="vertical-fill undf" id="bar-fill-undf"></div></div>
+                        <span class="vertical-value-lbl" id="bar-txt-undf" style="color: var(--neon-orange)">0</span>
+                        <div class="vertical-title-lbl">Undetected</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel" style="flex: 1;">
+                <div class="panel-header">
+                    <span>Distribution Analytics Breakdown</span>
+                    <i class="fa-solid fa-ellipsis"></i>
+                </div>
+                <div class="pie-split-layout">
+                    <div class="pie-chart-wrapper">
+                        <div class="pie-canvas-frame" id="conicPieCanvas"></div>
+                    </div>
+                    <div class="pie-legend-column">
+                        <div class="pie-legend-row">
+                            <span>Authorized</span><strong id="lbl-p-auth">67%</strong>
+                        </div>
+                        <div class="pie-legend-row">
+                            <span>Threats</span><strong id="lbl-p-thrt">33%</strong>
+                        </div>
+                        <div class="pie-legend-row">
+                            <span>Unreadable</span><strong id="lbl-p-undf">0%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-button-panel">
+                    <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm">
+                        <input type="file" name="image" id="fileInput" accept="image/*" style="display:none;">
+                        <label for="fileInput" class="scan-trigger-btn" id="uploadBtn">
+                            <i class="fa-solid fa-expand"></i> Scan Image
+                        </label>
+                    </form>
+                    <div id="processing-loader">
+                        <i class="fa-solid fa-microchip fa-spin"></i> ANPR ANALYSIS MATRIX ENGAGED...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const uploadForm = document.getElementById("uploadForm");
+        const loader = document.getElementById("processing-loader");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const siren = document.getElementById("sirenPlayer");
+
+        let rawTotal = parseInt(localStorage.getItem('n_total') || '0');
+        let rawAuth = parseInt(localStorage.getItem('n_auth') || '0');
+        let rawThrt = parseInt(localStorage.getItem('n_thrt') || '0');
+        let rawUndf = parseInt(localStorage.getItem('n_unreadable') || '0');
+
+        const flaskPlate = "{{ plate_text or '' }}";
+        const flaskThreat = "{{ 'YES' if threat else 'NO' }}";
+
+        if (flaskThreat === 'YES') {
+            siren.play().catch(e => console.log("Media channel alert lock bypassed."));
+        }
+
+        if (flaskPlate) {
+            if (!sessionStorage.getItem('lock_frame_index')) {
+                rawTotal += 1;
+                if (flaskPlate === "Unreadable" || flaskPlate === "") {
+                    rawUndf += 1;
+                } else if (flaskThreat === 'YES') {
+                    rawThrt += 1;
+                } else {
+                    rawAuth += 1;
+                }
+                localStorage.setItem('n_total', rawTotal);
+                localStorage.setItem('n_auth', rawAuth);
+                localStorage.setItem('n_thrt', rawThrt);
+                localStorage.setItem('n_unreadable', rawUndf);
+                sessionStorage.setItem('lock_frame_index', 'true');
+            }
+        } else {
+            sessionStorage.removeItem('lock_frame_index');
+        }
+
+        document.getElementById('card-total').innerText = rawTotal;
+        document.getElementById('card-auth').innerText = rawAuth;
+        document.getElementById('card-denied').innerText = rawThrt;
+
+        document.getElementById('bar-txt-auth').innerText = rawAuth;
+        document.getElementById('bar-txt-thrt').innerText = rawThrt;
+        document.getElementById('bar-txt-undf').innerText = rawUndf;
+
+        // FIXED: Re-mapped the calculation matrix logic loops so it forces gradient redraws onto DOM nodes seamlessly
+        let shareAuth = 67;
+        let shareThrt = 33;
+        let shareUndf = 0;
+
+        if (rawTotal > 0) {
+            document.getElementById('bar-fill-auth').style.height = ((rawAuth / rawTotal) * 100) + "%";
+            document.getElementById('bar-fill-thrt').style.height = ((rawThrt / rawTotal) * 100) + "%";
+            document.getElementById('bar-fill-undf').style.height = ((rawUndf / rawTotal) * 100) + "%";
+            
+            shareAuth = Math.round((rawAuth / rawTotal) * 100);
+            shareThrt = Math.round((rawThrt / rawTotal) * 100);
+            shareUndf = Math.round((rawUndf / rawTotal) * 100);
+        } else {
+            document.getElementById('bar-fill-auth').style.height = "0%";
+            document.getElementById('bar-fill-thrt').style.height = "0%";
+            document.getElementById('bar-fill-undf').style.height = "0%";
+        }
+
+        document.getElementById('lbl-p-auth').innerText = shareAuth + "%";
+        document.getElementById('lbl-p-thrt').innerText = shareThrt + "%";
+        document.getElementById('lbl-p-undf').innerText = shareUndf + "%";
+
+        // Forces CSS layout engine pass updates seamlessly on load sequence execution rules profiles
+        document.getElementById('conicPieCanvas').style.background = `conic-gradient(
+            var(--pink-2) 0% ${shareAuth}%, 
+            var(--pink-3) ${shareAuth}% ${shareAuth + shareThrt}%, 
+            var(--pink-4) ${shareAuth + shareThrt}% 100%
+        )`;
+
+        if (fileInput) {
+            fileInput.onchange = () => {
+                if (fileInput.files.length > 0) {
+                    if (uploadBtn) uploadBtn.style.display = "none";
+                    if (loader) loader.style.display = "block";
+                    siren.play().then(() => siren.pause()).catch(() => {});
+                    uploadForm.submit();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

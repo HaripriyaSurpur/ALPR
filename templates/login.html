@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPR System Authentication</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #050610;
+            --panel-bg: rgba(255, 255, 255, 0.035);
+            --panel-border: rgba(255, 182, 193, 0.22);
+            --border-glow: rgba(255, 182, 193, 0.15);
+            --neon-pink: #ff2a85;
+            --text-main: #ffffff;
+            --text-muted: #8fa0b5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url("{{ url_for('static', filename='cyber_bg.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            filter: blur(2px);
+            z-index: -2;
+        }
+
+        body::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(5, 6, 16, 0.3) 0%, rgba(5, 6, 16, 0.75) 100%);
+            z-index: -1;
+        }
+
+        .login-box {
+            width: 460px;
+            padding: 50px 40px;
+            border-radius: 16px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.3), inset 0 0 15px var(--border-glow);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #ffffff;
+            font-size: 30px;
+            font-weight: 900;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .system-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--neon-pink);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px rgba(255, 42, 133, 0.35);
+        }
+
+        .input-wrapper { position: relative; margin-bottom: 22px; }
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 16px 16px 16px 45px;
+            border: none;
+            outline: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper input:focus {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 42, 133, 0.2);
+        }
+
+        .auth-submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-submit-btn:hover {
+            background: rgba(255, 42, 133, 0.2);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 42, 133, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+        <h1>NEXUS // ALPR</h1>
+        <div class="system-subtitle">Authentication Required</div>
+
+        <form method="POST">
+            <div class="input-wrapper">
+                <input type="text" name="username" placeholder="Enter Username" required autocomplete="off">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="password" name="password" placeholder="Enter Access Password" required>
+                <i class="fa-solid fa-key"></i>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                INITIATE ACCESS
+            </button>
+        </form>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <script>
+        alert("{{ messages[0] }}");
+    </script>
+    {% endif %}
+    {% endwith %}
+
+</body>
+</html>

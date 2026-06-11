@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ANPR History</title>
+
+<style>
+
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.top-bar{
+    margin-bottom:20px;
+}
+
+.back-btn{
+
+    text-decoration:none;
+
+    color:white;
+
+    background:#007bff;
+
+    padding:10px 15px;
+
+    border-radius:5px;
+
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#1b1b1b;
+}
+
+th, td{
+
+    border:1px solid #444;
+
+    padding:12px;
+
+    text-align:center;
+}
+
+th{
+    background:#222;
+}
+
+tr:nth-child(even){
+    background:#262626;
+}
+
+img{
+    width:160px;
+    border-radius:10px;
+    border:2px solid white;
+}
+
+.yes{
+    color:#ff4444;
+    font-weight:bold;
+}
+
+.no{
+    color:#00ff99;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>ANPR Scan History</h1>
+
+<div class="top-bar">
+
+<a href="/" class="back-btn">
+
+← Back To Dashboard
+
+</a>
+
+</div>
+
+<table>
+
+<tr>
+
+<th>ID</th>
+
+<th>Plate Number</th>
+
+<th>State</th>
+
+<th>Threat</th>
+
+<th>Alert</th>
+
+<th>Image</th>
+
+<th>Date</th>
+
+<th>Time</th>
+
+</tr>
+
+{% for row in data %}
+
+<tr>
+
+<td>{{ row[0] }}</td>
+
+<td>{{ row[1] }}</td>
+
+<td>{{ row[2] }}</td>
+
+<td>
+
+{% if row[3] == "YES" %}
+
+<span class="yes">YES</span>
+
+{% else %}
+
+<span class="no">NO</span>
+
+{% endif %}
+
+</td>
+
+<td>{{ row[4] }}</td>
+
+<td>
+
+<img src="{{ url_for('result_file', filename=row[5]) }}">
+
+</td>
+
+<td>{{ row[6] }}</td>
+
+<td>{{ row[7] }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ANPR History</title>
+
+<style>
+
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.top-bar{
+    margin-bottom:20px;
+}
+
+.back-btn{
+
+    text-decoration:none;
+
+    color:white;
+
+    background:#007bff;
+
+    padding:10px 15px;
+
+    border-radius:5px;
+
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#1b1b1b;
+}
+
+th, td{
+
+    border:1px solid #444;
+
+    padding:12px;
+
+    text-align:center;
+}
+
+th{
+    background:#222;
+}
+
+tr:nth-child(even){
+    background:#262626;
+}
+
+img{
+    width:160px;
+    border-radius:10px;
+    border:2px solid white;
+}
+
+.yes{
+    color:#ff4444;
+    font-weight:bold;
+}
+
+.no{
+    color:#00ff99;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>ALPR Scan History</h1>
+
+<div class="top-bar">
+
+<a href="/" class="back-btn">
+
+← Back To Dashboard
+
+</a>
+
+</div>
+
+<table>
+
+<tr>
+
+<th>ID</th>
+
+<th>Plate Number</th>
+
+<th>State</th>
+
+<th>Threat</th>
+
+<th>Alert</th>
+
+<th>Image</th>
+
+<th>Date</th>
+
+<th>Time</th>
+
+</tr>
+
+{% for row in data %}
+
+<tr>
+
+<td>{{ row[0] }}</td>
+
+<td>{{ row[1] }}</td>
+
+<td>{{ row[2] }}</td>
+
+<td>
+
+{% if row[3] == "YES" %}
+
+<span class="yes">YES</span>
+
+{% else %}
+
+<span class="no">NO</span>
+
+{% endif %}
+
+</td>
+
+<td>{{ row[4] }}</td>
+
+<td>
+
+<img src="{{ url_for('result_file', filename=row[5]) }}">
+
+</td>
+
+<td>{{ row[6] }}</td>
+
+<td>{{ row[7] }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>
